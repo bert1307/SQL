@@ -21,7 +21,7 @@ CREATE PROCEDURE PR_Cadastro_Paciente
 GO 
 
 EXEC PR_Cadastro_Paciente 'Rogerio', '11925326458','rogerio@gmail.com', 'Av. Paulista, 55', '45824698752', '01-01-1990'
-EXEC PR_Cadastro_Paciente 'Flavia', '11958484876','flavia@gmail.com', 'Av. São João, 1558', '85496312547', '02-02-1991'
+EXEC PR_Cadastro_Paciente 'Flavia', '11958484876','flavia@gmail.com', 'Av. Sï¿½o Joï¿½o, 1558', '85496312547', '02-02-1991'
 EXEC PR_Cadastro_Paciente 'Jairo', '11956489725','jairo@gmail.com', 'Av. Castro Alves, 154', '48756845878', '03-03-1992'
 EXEC PR_Cadastro_Paciente 'Rodrigo', '11925325544','rodrigo@gmail.com', 'Rua Miguel Pereira, 254', '45879612575', '04-04-1993'
 EXEC PR_Cadastro_Paciente 'Maria Rita', '11958486321','mariarita@gmail.com', 'Rua Ipiranga, 45', '75846878948', '05-05-1994'
@@ -54,7 +54,7 @@ EXEC PR_Cadastro_Medico 'Julia', 11, '11985478544', 'Av.Matarazzo, 48', 568947, 
 EXEC PR_Cadastro_Medico 'Rosa', 10, '11947586235' , 'Av. Paulista, 1544',588789, 'rosa@gmail.com'
 EXEC PR_Cadastro_Medico 'Carlos', 3, '11945783625', 'Av. Carlos Andrade, 78', 584788, 'carlos@gmail.com'
 EXEC PR_Cadastro_Medico 'Roberto', 1, '11939457862', 'Av. Caruaru, 75', 758689, 'roberto@gmail.com'
-EXEC PR_Cadastro_Medico 'Carina', 5, '11921567859', 'Rua 25 de Março, 45', 874698, 'carina@gmail.com'
+EXEC PR_Cadastro_Medico 'Carina', 5, '11921567859', 'Rua 25 de Marï¿½o, 45', 874698, 'carina@gmail.com'
 
 
 CREATE PROCEDURE PR_Pedido_Exame
@@ -216,3 +216,40 @@ GO
 
 EXEC PR_EXCLUI_EXAME 3, 'Endoscopia'
 SELECT * FROM TB_Exame
+
+/*TRIGGER PARA IDENTIFICAR PACIENTES QUE JA POSSUEM CADASTRO NO SISTEMA PELO CPF*/
+
+
+CREATE TRIGGER TR_CADASTRO_DUPLICADO
+ON TB_Paciente /*NA TABELA PACIENTE*/
+
+AFTER INSERT /*DEPOIS DE INSERIR OS DADOS DO PACIENTE*/
+AS
+	BEGIN
+		/* CONDICAO DE VERIFICACAO POR MEIO DE CONSULTA DO CAMPO CPF = SE EXISTIR NA CONSULTA DA COLUNA CPF DA TABELA PACIENTE */ 
+		IF (EXISTS(SELECT CPF FROM TB_Paciente
+		/* O AGRUPAMENTO DO CPF RESULTAR EM MAIS DE 1 LINHA, OU SEJA,
+		SE O REGISTRO INSERIDO FOR SEMELHANTE A QUALQUER OUTRA LINHA DO CAMPO E AO AGRUPA-LOS SOMAR MAIS DE 1 LINHA */
+			GROUP BY CPF 
+			HAVING COUNT (*) > 1)) 
+		/* FACA: */
+		BEGIN
+			RAISERROR ('PACIENTE JA POSSUI CADASTRO NO SISTEMA', 15,0) /* EXIBA A MENSAGEM PARA O USUARIO */
+			ROLLBACK /*DESFACA A TRANSACAO E VOLTE PARA SEU ESTADO INICIAL*/
+		END
+	END
+GO
+
+/*15	Indica erros de sintaxe no comando Transact-SQL*/
+
+
+
+INSERT INTO TB_Paciente (Nome_Paciente, Telefone, Celular, Endereco, CPF, Observacao)
+VALUES
+	('EDUARDO','3333-3333','99999-9999','Rua Barra Funda, 100, casa - SP', '12345678922', 'xxxxxxx')
+
+	INSERT INTO TB_Paciente (Nome_Paciente, Telefone, Celular, Endereco, CPF, Observacao)
+	VALUES
+	('MARIA','3333-3333','99999-9999','Rua Barra Funda, 100, casa - SP', '12345678911', 'xxxxxxx')
+
+SELECT * FROM TB_Paciente
